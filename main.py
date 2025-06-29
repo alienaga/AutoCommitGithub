@@ -3,43 +3,42 @@ import os
 from pathlib import Path
 
 def create_txt_file_with_date():
-    # Generate today's date
-    current_date = datetime.datetime.now().strftime('%Y-%m-%d')
+    today_str = datetime.datetime.now().strftime('%Y-%m-%d')
+    now_str   = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    # Build dynamic file path
+    print(f"Today's date is: {today_str}")
+    print(f"Current date and time: {now_str}")
+
     base_dir = Path.home() / "OneDrive" / "Documents" / "GitHub" / "Logs-AutoSave"
-    file_path = base_dir / f"Logs Add {current_date}.txt"
-
-    # Create the directory if it doesn't exist
     base_dir.mkdir(parents=True, exist_ok=True)
 
-    # Write the current date to the file
-    with open(file_path, 'w') as file:
-        file.write(current_date + '\n')
-        print("Text written successfully to file.")
-
-    print(f"Your log file was saved here:\n{file_path}")
+    file_path = base_dir / f"Logs Add {today_str}.txt"
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.write(now_str + '\n')
+    print(f"Text written successfully to file:\n  {file_path}")
 
 def commit_and_push():
     repo_path = Path.home() / "OneDrive" / "Documents" / "GitHub" / "Logs-AutoSave"
     os.chdir(repo_path)
 
-    # Initialize Git if not already a repo
+    # 1) On first run: init + remote + set up main branch
     if not (repo_path / ".git").exists():
         os.system('git init')
         os.system('git remote add origin https://github.com/alienaga/Logs-Automation.git')
-        os.system('git pull origin main --allow-unrelated-histories')
-    
-    current_date = datetime.datetime.now().strftime('%Y-%m-%d')
-    commit_message = f"Schedule Automated commit for {current_date}"
+        # create a local main that tracks origin/main (won't wipe your new file)
+        os.system('git fetch origin main')
+        os.system('git checkout -b main --track origin/main')
 
+    # 2) Always pull any new remote commits
+    os.system('git pull origin main --allow-unrelated-histories')
+
+    # 3) Stage & commit your newly-written log
+    now_str = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     os.system('git add .')
-    os.system(f'git commit -m "{commit_message}"')
+    os.system(f'git commit -m "Automated commit for {now_str}"')
 
-    # 🛠 Add this line to avoid rejection due to upstream changes
-    os.system('git pull origin master --allow-unrelated-histories')
-
-    os.system('git push origin master')
+    # 4) Push back to GitHub
+    os.system('git push origin main')
 
 if __name__ == "__main__":
     create_txt_file_with_date()
